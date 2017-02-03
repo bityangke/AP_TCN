@@ -5,7 +5,7 @@ from numba import jit, int64, boolean
 from LCTM import utils
 import sklearn.metrics as sm
 
-from LCTM.IoU_metrics import *
+#from LCTM.IoU_metrics import *
 
 
 from functools import partial
