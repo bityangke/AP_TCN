@@ -130,18 +130,17 @@ def AP_TCN(n_nodes, conv_len, n_classes, n_feat, max_len,
             loss='categorical_crossentropy', causal=False, 
             optimizer="rmsprop", activation='norm_relu',
             return_param_str=False):
-    print("test AP-TCN")
     n_layers = len(n_nodes)
 
     inputs = Input(shape=(max_len,n_feat))
-    print '(max_len:{0}, ne_feat:{1})'.format(max_len,n_feat)
+    #print '(max_len:{0}, ne_feat:{1})'.format(max_len,n_feat)
     model = inputs
 
     # ---- Encoder ----
     for i in range(n_layers):
         # Pad beginning of sequence to prevent usage of future data
         if causal: model = ZeroPadding1D((conv_len//2,0))(model)
-        print 'n_nodes[{0}]={1}'.format(i, n_nodes[i])
+        #print 'n_nodes[{0}]={1}'.format(i, n_nodes[i])
         model = Convolution1D(n_nodes[i], conv_len, border_mode='same')(model)
         if causal: model = Cropping1D((0,conv_len//2))(model)
 
@@ -158,11 +157,10 @@ def AP_TCN(n_nodes, conv_len, n_classes, n_feat, max_len,
         model = MaxPooling1D(2)(model)
             
     model = Flatten()(model) # reshape a feature volume to a column vector
-    #model = Reshape((None,1,3072))(model) # reshape a feature volume to a column vector
+    
+    # Output FC layer (Softmax)
     model = RepeatVector(1)(model)
     model = Dense(n_classes, activation="softmax")(model)
-    # Output FC layer (Softmax)
-    #model = TimeDistributed(Dense(n_classes, activation="softmax" ))(model)
     
     model = Model(input=inputs, output=model)    
     model.compile(loss=loss, optimizer=optimizer, sample_weight_mode="temporal", metrics=['accuracy'])

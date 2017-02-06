@@ -84,6 +84,17 @@ def subsample(X, Y, rate=1, dim=0):
 
 	return X_, Y_
 
+def subsample_one_vector(X, rate=1, dim=0):
+	if dim==0:
+		X_ = [x[::rate] for x in X]
+	elif dim==1:
+		X_ = [x[:,::rate] for x in X]
+	else:
+		print("Subsample not defined for dim={}".format(dim))
+		return None, None
+
+	return X_
+
 # def subsample(X, Y, rate=1, dim=1):
 # 	if dim == 1:
 # 		Y_ = [y[:,::rate] for y in Y]
