@@ -124,7 +124,7 @@ class Dataset:
             
         X_all, Y_all, X_train, y_train = [], [], [], []
         cnt = 0
-        for f in files_features:
+        for f in files_features: # loop over samples
             if self.name != "UCF101":
                 if "Split_" in os.listdir(dir_features)[-1]:
                     data_tmp = sio.loadmat( closest_file("{}{}/{}".format(dir_features,split, f)) )
@@ -135,20 +135,24 @@ class Dataset:
             else:
                 data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) ) 
                 tmp_list = list()
-                for i in range(len(data_tmp[feature_type])):
-                    tmp_list.append(np.array(data_tmp[feature_type][i][0].reshape(4096).tolist()))
-                    # tmp_list.append( data_tmp[feature_type][i][0].reshape(4096).tolist() )
-                #X_train += [ np.array(tmp_list).astype(np.float32) ] 
-                X_train += [ tmp_list ] 
+                for i in range(len(data_tmp[feature_type])): # loop over time steps
+                    # tmp_list.append(np.array(data_tmp[feature_type][i][0].reshape(4096).tolist()))
+                    
+                    temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist()
+                    tmp_list.append( np.array(temp) )
+                    # tmp_list.append( data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist() )
+                    
+                X_train += [ np.array(tmp_list).astype(np.float32) ] 
+                # X_train += [ tmp_list ] 
                 if cnt%100 == 0:
                     print(cnt)
                 cnt += 1
                 y_train += [ self.class_index[f.split('_')[2].lower()] ]
-                if cnt >= 1200:
-                    break
+                # if cnt >= 300:
+                #     break
                 #y_train += [ np.array(self.class_index[f.split('_')[2].lower()]) ]
         
-        #pdb.set_trace()
+        # pdb.set_trace()
         
         if self.name == "UCF101":
             X_test, y_test = [], []
@@ -157,16 +161,18 @@ class Dataset:
                 data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) ) 
                 tmp_list = list()
                 for i in range(len(data_tmp[feature_type])):
-                    tmp_list.append(np.array(data_tmp[feature_type][i][0].reshape(4096).tolist()))
-                    #tmp_list.append(data_tmp[feature_type][i][0].reshape(4096).tolist())
+                    #tmp_list.append(np.array(data_tmp[feature_type][i][0].reshape(4096).tolist()))
+                    temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist()
+                    tmp_list.append( np.array(temp) )
+                    # tmp_list.append(data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist())
                 #X_test += [ np.array(tmp_list).astype(np.float32) ] 
-                X_test += [ tmp_list ] 
+                X_test += [ np.array(tmp_list).astype(np.float32) ] 
                 if cnt%100 == 0:
                     print(cnt)
                 cnt += 1
                 y_test += [ self.class_index[f.split('_')[2].lower()] ]
-                if cnt >= 400:
-                    break
+                # if cnt >= 100:
+                #     break
                 
         # Make sure axes are correct (TxF not FxT for F=feat, T=time)
         if self.name != "UCF101":
@@ -193,7 +199,7 @@ class Dataset:
             y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
         else:
             #self.n_features = X_train[0].shape[1]
-            self.n_features = X_train[0]
+            self.n_features = len(X_train[0][0]) #X_train[0]
             self.n_classes = len(np.unique(np.hstack(y_train)))
             
              # Subsample the data
