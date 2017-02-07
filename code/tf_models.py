@@ -166,7 +166,7 @@ def AP_TCN(n_nodes, conv_len, n_classes, n_feat, max_len,
     model.compile(loss=loss, optimizer=optimizer, sample_weight_mode="temporal", metrics=['accuracy'])
 
     if return_param_str:
-        param_str = "ED-TCN_C{}_L{}".format(conv_len, n_layers)
+        param_str = "AP-TCN_C{}_L{}".format(conv_len, n_layers)
         if causal:
             param_str += "_causal"
     

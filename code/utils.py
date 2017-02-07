@@ -31,6 +31,17 @@ def mask_data(X, Y, max_len=None, mask_value=0):
 		mask[i,:l] = 1
 	return X_, Y_, mask[:,:,None]
 
+def mask_data_one_tensor(X, max_len=None, mask_value=0):
+	if max_len is None:
+		max_len = np.max([x.shape[0] for x in X])
+	X_ = np.zeros([len(X), max_len, X[0].shape[1]])+mask_value
+	mask = np.zeros([len(X), max_len])
+	for i in range(len(X)):
+		l = X[i].shape[0]
+		X_[i,:l] = X[i]
+		mask[i,:l] = 1
+	return X_, mask[:,:,None]
+
 # Unmask data
 def unmask(X, M):
 	if X[0].ndim==1 or (X[0].shape[0] > X[0].shape[1]):

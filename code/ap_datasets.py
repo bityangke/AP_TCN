@@ -49,6 +49,7 @@ class Dataset:
             split_folders = os.listdir(self.base_dir+"splits/{}/".format(self.name))
             self.splits = np.sort([s for s in split_folders if "Split" in s])
         else:
+            self.n_classes = 101
             split_files = glob.glob(base_dir+"ucfTrainTestlist/"+"train*.txt")
             index_raw_data = open(self.base_dir+"ucfTrainTestlist/"+"classInd.txt").readlines()
             self.class_index = dict()
@@ -152,8 +153,6 @@ class Dataset:
                 #     break
                 #y_train += [ np.array(self.class_index[f.split('_')[2].lower()]) ]
         
-        # pdb.set_trace()
-        
         if self.name == "UCF101":
             X_test, y_test = [], []
             cnt = 0
@@ -198,8 +197,8 @@ class Dataset:
             y_train = [Y_all[fid2idx[f]] for f in file_train if f in fid2idx]
             y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
         else:
-            #self.n_features = X_train[0].shape[1]
-            self.n_features = len(X_train[0][0]) #X_train[0]
+            self.n_features = X_train[0].shape[1]
+            # self.n_features = len(X_train[0][0]) #X_train[0]
             self.n_classes = len(np.unique(np.hstack(y_train)))
             
              # Subsample the data
