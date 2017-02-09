@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 from numba import jit, int64, boolean
 
-from LCTM import utils
+#from LCTM import utils
 import sklearn.metrics as sm
 
 #from LCTM.IoU_metrics import *
@@ -145,7 +145,7 @@ def classification_accuracy(P, Y, bg_class=None, **kwargs):
 
 @jit("float64(int64[:], int64[:], boolean)")
 def levenstein_(p,y, norm=False):
-    m_row = len(p)    
+    m_row = len(p)
     n_col = len(y)
     D = np.zeros([m_row+1, n_col+1], np.float)
     for i in range(m_row+1):
@@ -156,12 +156,12 @@ def levenstein_(p,y, norm=False):
     for j in range(1, n_col+1):
         for i in range(1, m_row+1):
             if y[j-1]==p[i-1]:
-                D[i,j] = D[i-1,j-1] 
+                D[i,j] = D[i-1,j-1]
             else:
                 D[i,j] = min(D[i-1,j]+1,
                              D[i,j-1]+1,
                              D[i-1,j-1]+1)
-    
+
     if norm:
         score = (1 - D[-1,-1]/max(m_row, n_col) ) * 100
     else:
@@ -228,7 +228,7 @@ def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, **kwargs):
         FP = FP.sum()
         # False negatives are any unused true segment (i.e. "miss")
         FN = n_true - true_used.sum()
-        
+
         precision = TP / (TP+FP)
         recall = TP / (TP+FN)
         F1 = 2 * (precision*recall) / (precision+recall)
@@ -247,7 +247,7 @@ def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, **kwargs):
 def overlap_score(P, Y, bg_class=None, **kwargs):
     # From ICRA paper:
     # Learning Convolutional Action Primitives for Fine-grained Action Recognition
-    # Colin Lea, Rene Vidal, Greg Hager 
+    # Colin Lea, Rene Vidal, Greg Hager
     # ICRA 2016
 
     def overlap_(p,y, bg_class):
@@ -260,7 +260,7 @@ def overlap_score(P, Y, bg_class=None, **kwargs):
             true_intervals = np.array([t for t,l in zip(true_intervals, true_labels) if l!=bg_class])
             true_labels = np.array([l for l in true_labels if l!=bg_class])
             pred_intervals = np.array([t for t,l in zip(pred_intervals, pred_labels) if l!=bg_class])
-            pred_labels = np.array([l for l in pred_labels if l!=bg_class])            
+            pred_labels = np.array([l for l in pred_labels if l!=bg_class])
 
         n_true_segs = true_labels.shape[0]
         n_pred_segs = pred_labels.shape[0]
@@ -302,7 +302,7 @@ def interval_overlap(gt_inter,det_inter):
                 np.minimum(gt_inter[i,0], det_inter[:,0])
         intersection = np.minimum(gt_inter[i,1], det_inter[:,1]) - \
                         np.maximum(gt_inter[i,0], det_inter[:,0])
-        intersection = intersection.clip(0, np.inf)    
+        intersection = intersection.clip(0, np.inf)
         ov[i] = intersection/union
 
     return ov
@@ -316,12 +316,12 @@ def midpoint_criterion(gt_inter,det_inter):
         midpoints = det_inter.mean(1)
         ov[i] = (midpoints>=gt_inter[i][0])*(midpoints<gt_inter[i][1])
 
-    return ov    
+    return ov
 
 # Recreated from the THUMOS2014 code for computing mAP@k
-def TH14eventdetpr(gt_files, det_files, 
-                   gt_labels, det_labels, 
-                   gt_intervals,det_intervals, label, det_conf, 
+def TH14eventdetpr(gt_files, det_files,
+                   gt_labels, det_labels,
+                   gt_intervals,det_intervals, label, det_conf,
                     overlap, overlap_fcn=interval_overlap):
     # returns recall, precision, ap
 
@@ -384,16 +384,16 @@ def TH14eventdetpr(gt_files, det_files,
     return rec, prec, ap
 
 
-def midpoint_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_intervals, 
+def midpoint_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_intervals,
             det_conf, bg_class=None):
     return IoU_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_intervals, \
             det_conf, bg_class=bg_class, use_midpoint=True)
 
-def IoU_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_intervals, 
+def IoU_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_intervals,
             det_conf, threshold=.5, bg_class=None, use_midpoint=False):
 # %    Output:         pr_all: precision-recall curves
 # %                    ap_all: AP for each class
-# %                       map: MAP 
+# %                       map: MAP
 
     # Get labels. Remove background class if necessary
     labels = np.unique(gt_labels).tolist()
@@ -412,8 +412,8 @@ def IoU_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_interv
     for i in range(n_labels):
         label = labels[i]
         if any(gt_labels==label):
-            rec, prec, ap = TH14eventdetpr(gt_files, det_files, gt_labels, det_labels, 
-                                            gt_intervals, det_intervals, label, det_conf, 
+            rec, prec, ap = TH14eventdetpr(gt_files, det_files, gt_labels, det_labels,
+                                            gt_intervals, det_intervals, label, det_conf,
                                             threshold, overlap_fcn)
             pr_labels += [label]
             pr_all += [prec]
@@ -422,6 +422,4 @@ def IoU_mAP(gt_files, det_files, gt_labels, det_labels, gt_intervals, det_interv
 
     mAP = np.mean(ap_all)
 
-    return pr_all, ap_all, mAP    
-
-
+    return pr_all, ap_all, mAP
