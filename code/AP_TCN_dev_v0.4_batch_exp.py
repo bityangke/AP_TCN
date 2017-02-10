@@ -124,7 +124,7 @@ for model_type in ["AP-TCN", "AP-TCN-SanityCheck"]:
                 M_train2 = np.array([[1] for i in range(len(X_train))])
 
                 # fitting a model
-                print('model_type={0}, video_rate={1}, max_len={2}, nb_epoch={3}'.format(model_type,video_rate,max_len,nb_epoch))
+                print('model_type={0}, video_rate={1}, max_len={2}, nb_epoch={3}, split={4}'.format(model_type,video_rate,max_len,nb_epoch,split))
                 model.fit(X_train_m_shuffle, Y_train_shuffle, nb_epoch=nb_epoch, batch_size=8, verbose=1, shuffle=True, sample_weight=M_train2)
 
                 print(param_str)

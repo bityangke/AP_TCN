@@ -136,22 +136,15 @@ class Dataset:
             else:
                 data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) ) 
                 tmp_list = list()
+                feat_len = len(data_tmp[feature_type][0][0].flatten())
                 for i in range(len(data_tmp[feature_type])): # loop over time steps
-                    # tmp_list.append(np.array(data_tmp[feature_type][i][0].reshape(4096).tolist()))
-                    
-                    temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist()
+                    temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(feat_len).tolist()
                     tmp_list.append( np.array(temp) )
-                    # tmp_list.append( data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist() )
-                    
                 X_train += [ np.array(tmp_list).astype(np.float32) ] 
-                # X_train += [ tmp_list ] 
-                if cnt%100 == 0:
+                if cnt%200 == 0:
                     print(cnt)
                 cnt += 1
                 y_train += [ self.class_index[f.split('_')[2].lower()] ]
-                # if cnt >= 300:
-                #     break
-                #y_train += [ np.array(self.class_index[f.split('_')[2].lower()]) ]
         
         if self.name == "UCF101":
             X_test, y_test = [], []
@@ -159,20 +152,16 @@ class Dataset:
             for f in files_features_test:
                 data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) ) 
                 tmp_list = list()
+                feat_len = len(data_tmp[feature_type][0][0].flatten())
                 for i in range(len(data_tmp[feature_type])):
-                    #tmp_list.append(np.array(data_tmp[feature_type][i][0].reshape(4096).tolist()))
-                    temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist()
+                    temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(feat_len).tolist()
                     tmp_list.append( np.array(temp) )
-                    # tmp_list.append(data_tmp[feature_type][i][0].astype(np.float32).reshape(4096).tolist())
-                #X_test += [ np.array(tmp_list).astype(np.float32) ] 
                 X_test += [ np.array(tmp_list).astype(np.float32) ] 
-                if cnt%100 == 0:
+                if cnt%200 == 0:
                     print(cnt)
                 cnt += 1
                 y_test += [ self.class_index[f.split('_')[2].lower()] ]
-                # if cnt >= 100:
-                #     break
-                
+
         # Make sure axes are correct (TxF not FxT for F=feat, T=time)
         if self.name != "UCF101":
             if X_all[0].shape[0]!=Y_all[0].shape[0]:
