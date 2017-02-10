@@ -5,7 +5,7 @@ from collections import OrderedDict
 import numpy as np
 
 from scipy import io as sio
-from sklearn.decomposition import PCA
+#from sklearn.decomposition import PCA
 
 from keras.utils import np_utils
 
@@ -143,7 +143,7 @@ for split in data.splits:
 
     split_cnt += 1
 
-    if split_cnt >= 1:
-        break
+    #if split_cnt >= 1:
+    #    break
 
 print 'Mean test accuracy: {0}'.format(np.mean(test_accuracies))
