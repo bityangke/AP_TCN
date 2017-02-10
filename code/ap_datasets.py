@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import numpy as np
 import scipy.ndimage as nd
@@ -14,7 +15,7 @@ def closest_file(fid, extension=".mat"):
     basename = os.path.basename(fid)
     dirname = os.path.dirname(fid)
     dirfiles = os.listdir(dirname)
-    
+
     if basename in dirfiles:
         return fid
     else:
@@ -49,9 +50,9 @@ class Dataset:
             split_folders = os.listdir(self.base_dir+"splits/{}/".format(self.name))
             self.splits = np.sort([s for s in split_folders if "Split" in s])
         else:
-            self.n_classes = 101
             split_files = glob.glob(base_dir+"ucfTrainTestlist/"+"train*.txt")
             index_raw_data = open(self.base_dir+"ucfTrainTestlist/"+"classInd.txt").readlines()
+            self.n_classes = len(index_raw_data)
             self.class_index = dict()
             for s in range(len(index_raw_data)):
                 tmp = index_raw_data[s].split('\r')[0].split(' ')
@@ -70,10 +71,13 @@ class Dataset:
             files_features = np.sort(os.listdir(dir_features+"/{}/".format(split)))
         else:
             files_features = np.sort(os.listdir(dir_features))
-            
+
         files_features = [f for f in files_features if f.find(".mat")>=0]
         return files_features
-     
+
+    ################################################
+    #### get_files function for UCF101 dataset  ####
+    ################################################
     def get_files_ucf(self, file_list, dir_features, split=None):
         files_features = list()
         for i in range(len(file_list)):
@@ -81,7 +85,7 @@ class Dataset:
             filename = file_list[i].split()[0].split('/')[-1].split('.')[0] + '.mat'
             filename = subdir_name + '/alex-{0}_'.format(self.feature_type) + filename
             files_features.append(filename)
-            
+
         files_features = [f for f in files_features if f.find(".mat")>=0]
         return files_features
 
@@ -91,7 +95,7 @@ class Dataset:
     def load_split(self, features, split, feature_type="X", sample_rate=1):
         # Setup directory and filenames
         dir_features = self.feature_path(features)
-        
+
         # Get splits for this partion of data
         if self.activity==None:
             if self.name != "UCF101":
@@ -103,10 +107,10 @@ class Dataset:
                 dir_features = self.base_dir+"UCF101_AlexNet-{0}-features".format(self.feature_type)
         else:
             file_train = open(self.base_dir+"splits/{}/{}/{}/train.txt".format(self.name, self.activity, split)).readlines()
-            file_test = open( self.base_dir+"splits/{}/{}/{}/test.txt".format(self.name, self.activity, split)).readlines()        
-            
+            file_test = open( self.base_dir+"splits/{}/{}/{}/test.txt".format(self.name, self.activity, split)).readlines()
+
         file_train = [f.strip() for f in file_train]
-        file_test = [f.strip() for f in file_test]     
+        file_test = [f.strip() for f in file_test]
 
         # Remove extension
         if  "." in file_train[0]:
@@ -122,7 +126,7 @@ class Dataset:
         else:
             files_features = self.get_files_ucf(file_train, dir_features, split)
             files_features_test = self.get_files_ucf(file_test, dir_features, split)
-            
+
         X_all, Y_all, X_train, y_train = [], [], [], []
         cnt = 0
         for f in files_features: # loop over samples
@@ -134,29 +138,29 @@ class Dataset:
                 X_all += [ data_tmp[feature_type].astype(np.float32) ]
                 Y_all += [ np.squeeze(data_tmp["Y"]) ]
             else:
-                data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) ) 
+                data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
                 tmp_list = list()
                 feat_len = len(data_tmp[feature_type][0][0].flatten())
                 for i in range(len(data_tmp[feature_type])): # loop over time steps
                     temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(feat_len).tolist()
                     tmp_list.append( np.array(temp) )
-                X_train += [ np.array(tmp_list).astype(np.float32) ] 
+                X_train += [ np.array(tmp_list).astype(np.float32) ]
                 if cnt%200 == 0:
                     print(cnt)
                 cnt += 1
                 y_train += [ self.class_index[f.split('_')[2].lower()] ]
-        
+
         if self.name == "UCF101":
             X_test, y_test = [], []
             cnt = 0
             for f in files_features_test:
-                data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) ) 
+                data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
                 tmp_list = list()
                 feat_len = len(data_tmp[feature_type][0][0].flatten())
                 for i in range(len(data_tmp[feature_type])):
                     temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(feat_len).tolist()
                     tmp_list.append( np.array(temp) )
-                X_test += [ np.array(tmp_list).astype(np.float32) ] 
+                X_test += [ np.array(tmp_list).astype(np.float32) ]
                 if cnt%200 == 0:
                     print(cnt)
                 cnt += 1
@@ -189,7 +193,7 @@ class Dataset:
             self.n_features = X_train[0].shape[1]
             # self.n_features = len(X_train[0][0]) #X_train[0]
             self.n_classes = len(np.unique(np.hstack(y_train)))
-            
+
              # Subsample the data
             if sample_rate > 1:
                 X_train = utils.subsample_one_vector(X_train, sample_rate, dim=0)
@@ -199,13 +203,93 @@ class Dataset:
             print("Error loading data")
 
         return X_train, y_train, X_test, y_test
-    
+
+
+    ################################################
+    #### load_split function for UCF101 dataset ####
+    ################################################
+    def load_split_ucf(self, split, feature_type="X", sample_rate=1):
+        # Setup directory and filenames
+        dir_features = self.base_dir+"UCF101_AlexNet-{0}-features".format(self.feature_type)
+        file_train = open(self.base_dir+"ucfTrainTestlist/"+"trainlist{}.txt".format(split.split('_')[-1])).readlines()
+        file_test = open(self.base_dir+"ucfTrainTestlist/"+"testlist{}.txt".format(split.split('_')[-1])).readlines()
+
+        file_train = [f.strip() for f in file_train]
+        file_test = [f.strip() for f in file_test]
+
+        # Remove extension
+        if  "." in file_train[0]:
+            file_train = [".".join(f.split(".")[:-1]) for f in file_train]
+            file_test = [".".join(f.split(".")[:-1]) for f in file_test]
+
+        self.trials_train = file_train
+        self.trials_test = file_test
+
+        # Get all features
+        files_features = self.get_files_ucf(file_train, dir_features, split)
+        files_features_test = self.get_files_ucf(file_test, dir_features, split)
+
+        # Rearrange from .mat to np object for training data
+        #import time
+        X_train, y_train = [], []
+        cnt = 0
+        start = time.time()
+        for f in files_features: # loop over samples
+            # data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
+            # tmp_list = list()
+            # feat_len = len(data_tmp[feature_type][0][0].flatten())
+            # for i in range(len(data_tmp[feature_type])): # loop over time steps
+            #     temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(feat_len).tolist()
+            #     tmp_list.append( np.array(temp) )
+            # X_train += [ np.array(tmp_list).astype(np.float32) ]
+            data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
+            feat_len = len(data_tmp[feature_type][0][0].flatten())
+            X_train += [ np.array( [x[0].reshape(feat_len) for x in data_tmp[feature_type]] ) ]
+            y_train += [ self.class_index[f.split('_')[2].lower()] ]
+            cnt += 1
+            print '\r' + 'Loading the training data: {}%'.format(int(float(cnt)/len(files_features)*100)),
+        # end = time.time()
+        # print ('\n'.format(end-start))
+
+        # Rearrange from .mat to np object for test data
+        X_test, y_test = [], []
+        cnt = 0
+        for f in files_features_test:
+            # data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
+            # tmp_list = list()
+            # feat_len = len(data_tmp[feature_type][0][0].flatten())
+            # for i in range(len(data_tmp[feature_type])):
+            #     temp = data_tmp[feature_type][i][0].astype(np.float32).reshape(feat_len).tolist()
+            #     tmp_list.append( np.array(temp) )
+            # X_test += [ np.array(tmp_list).astype(np.float32) ]
+            data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
+            feat_len = len(data_tmp[feature_type][0][0].flatten())
+            X_test += [ np.array( [x[0].reshape(feat_len) for x in data_tmp[feature_type]] ) ]
+            y_test += [ self.class_index[f.split('_')[2].lower()] ]
+            cnt += 1
+            print '\r' + 'Loading the test data: {}%\r'.format(int(float(cnt)/len(files_features_test)*100)),
+
+        # Make sure axes are correct (TxF not FxT for F=feat, T=time)
+        self.n_features = X_train[0].shape[1]
+        self.n_classes = len(np.unique(np.hstack(y_train)))
+
+         # Subsample the data
+        if sample_rate > 1:
+            X_train = utils.subsample_one_vector(X_train, sample_rate, dim=0)
+            X_test = utils.subsample_one_vector(X_test, sample_rate, dim=0)
+
+        if len(X_train)==0:
+            print("Error loading data")
+
+        return X_train, y_train, X_test, y_test
+
+
     # a function for trimming video features
     def split_actions(self, seq):
         start = 0
         duration = 0
         action_labels = list()
-        
+
         for k,g in groupby(seq):
             this_group = list(g)
             label = k
@@ -214,5 +298,5 @@ class Dataset:
             end = start + duration - 1
             #print 'label:{0}, start:{1}, end:{2} duration:{3}'.format(label, start, end, duration)
             action_labels.append([label,start,end,duration])
-            
+
         return action_labels

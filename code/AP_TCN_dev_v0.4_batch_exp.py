@@ -39,7 +39,11 @@ if dataset == "UCF101":
 
 for model_type in ["AP-TCN", "AP-TCN-SanityCheck"]:
     for video_rate in [25, 10]:
+        if model_type == "AP-TCN" and video_rate == 25 :
+            continue
         for max_len in [90, 225]:
+            if video_rate == 10 and max_len == 90:
+                continue
             print('=================================================================================')
             print('=================================================================================')
             print('Training... model_type={0}, video_rate={1}, max_len={2}'.format(model_type, video_rate, max_len))
@@ -52,6 +56,7 @@ for model_type in ["AP-TCN", "AP-TCN-SanityCheck"]:
             n_classes = data.n_classes
             test_accuracies = list()
             test_losses = list()
+            split_cnt = 0
 
             # Load data for each split
             for split in data.splits:
@@ -137,6 +142,10 @@ for model_type in ["AP-TCN", "AP-TCN-SanityCheck"]:
 
                 # save the model
                 model.save('../models/{0}_r{1}_l{2}_{3}_{4}_epoch{5}.h5'.format(model_type, video_rate, max_len, dataset, split, nb_epoch))
+
+                split_cnt += 1
+                if split_cnt >= 1:
+                    break;
 
             print 'Mean test accuracy: {0}'.format(np.mean(test_accuracies))
             print('=================================================================================')

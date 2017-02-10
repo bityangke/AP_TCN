@@ -2,8 +2,8 @@
 #SBATCH -p long
 #SBATCH --gres=gpu:k80:1
 #SBATCH -w werbos
-#SBATCH -J batch_run_AP-TCN
-#SBATCH -o batch_run_AP-TCN.sh.log
+#SBATCH -J test
+#SBATCH -o test.log
 hostname
 echo $CUDA_VISIBLE_DEVICES
 source activate tf-ap
