@@ -9,4 +9,4 @@ echo $CUDA_VISIBLE_DEVICES
 source activate tf-ap
 export PYTHONHOME="/home/jinchoi/anaconda2/envs/tf-ap"
 which python
-srun python /home/jinchoi/src/rehab/action-recog/action_proposal/AP-TCN/code/AP_TCN_dev_v0.4.py
+srun python /home/jinchoi/src/rehab/action-recog/action_proposal/AP-TCN/code/test.py
