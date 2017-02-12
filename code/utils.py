@@ -106,6 +106,27 @@ def subsample_one_vector(X, rate=1, dim=0):
 
 	return X_
 
+# Subsample N windows with rate, and T number of samples in a feature vector matrix X
+# to generate a new feature vector matrix X_.
+# Each N rows of X_ is a feature vector for the corresponding feature vector of X.
+# Repeat the label Y N times to generate a new label vector Y_.
+def random_N_subsample(X, Y, N=10, T=16, rate=3, dim=0):
+	if dim==0:
+		w = T*rate
+		X_ = list()
+		for x in X:
+			l = x.shape[0]
+			starts = np.random.randint(l-w+1, size=N)
+			r_sample = [x[start:start+w:rate] for start in starts]
+			X_ = sum([X_, r_sample],[])
+			# X_.append(r_sample)
+		Y_ = np.repeat(np.array(Y),N).tolist()
+	else:
+		print("Subsample not defined for dim={}".format(dim))
+		return None, None
+
+	return X_, Y_
+
 # def subsample(X, Y, rate=1, dim=1):
 # 	if dim == 1:
 # 		Y_ = [y[:,::rate] for y in Y]
@@ -164,7 +185,7 @@ def partition_latent_labels(Yi, n_latent):
         # Do last partition differently in case of rounding errors
         stop = intervals[i][1]
         Zi[start:stop] = (Yi[start]+1)*n_latent - 1
-            
+
     return Zi
 
 # ------------- IO -------------
@@ -200,11 +221,8 @@ def check_images_available(x_uri, y, uri_data):
 			no_file += [i]
 	x_uri = np.array([x_uri[i] 	for i in range(len(x_uri)) if i not in no_file])
 	y 	= np.array([y[i] 		for i in range(len(y)) if i not in no_file])
-	
+
 	if len(no_file)>0:
 		print("Missing #", len(no_file))
 
 	return x_uri, y
-
-
-

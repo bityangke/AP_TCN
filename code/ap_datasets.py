@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import time
 import numpy as np
 import scipy.ndimage as nd
 import scipy.io as sio
@@ -208,7 +209,7 @@ class Dataset:
     ################################################
     #### load_split function for UCF101 dataset ####
     ################################################
-    def load_split_ucf(self, split, feature_type="X", sample_rate=1):
+    def load_split_ucf(self, split, feature_type="X", num_sample_clips=10, num_sample_frames=16, sample_rate=1):
         # Setup directory and filenames
         dir_features = self.base_dir+"UCF101_AlexNet-{0}-features".format(self.feature_type)
         file_train = open(self.base_dir+"ucfTrainTestlist/"+"trainlist{}.txt".format(split.split('_')[-1])).readlines()
@@ -230,10 +231,9 @@ class Dataset:
         files_features_test = self.get_files_ucf(file_test, dir_features, split)
 
         # Rearrange from .mat to np object for training data
-        #import time
         X_train, y_train = [], []
         cnt = 0
-        start = time.time()
+        # start = time.time()
         for f in files_features: # loop over samples
             # data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
             # tmp_list = list()
@@ -267,24 +267,45 @@ class Dataset:
             X_test += [ np.array( [x[0].reshape(feat_len) for x in data_tmp[feature_type]] ) ]
             y_test += [ self.class_index[f.split('_')[2].lower()] ]
             cnt += 1
-            print '\r' + 'Loading the test data: {}%\r'.format(int(float(cnt)/len(files_features_test)*100)),
+            print '\r' + 'Loading the test data: {}%'.format(int(float(cnt)/len(files_features_test)*100)),
 
         # Make sure axes are correct (TxF not FxT for F=feat, T=time)
         self.n_features = X_train[0].shape[1]
         self.n_classes = len(np.unique(np.hstack(y_train)))
 
-         # Subsample the data
+        ###  Random shuffle of the training data and corresponding labels
+        ###  This is important since the Keras model.fit function does shuffle
+        ###  after sampling the last portion of the training data !!!
+        print("Shuffling the training data...")
+        np.random.seed(0)
+        rand_ind = np.random.permutation(len(X_train))
+        X_train_shuffle = np.array(X_train)[rand_ind].tolist()
+        y_train_shuffle = np.array(y_train)[rand_ind].tolist()
+        # print(rand_ind)
+
+        np.random.seed(0)
+        rand_ind = np.random.permutation(len(X_test))
+        X_test_shuffle = np.array(X_test)[rand_ind].tolist()
+        y_test_shuffle = np.array(y_test)[rand_ind].tolist()
+        # print(rand_ind)
+        print("Shuffling done.")
+
+        # Subsample the data
         if sample_rate > 1:
-            X_train = utils.subsample_one_vector(X_train, sample_rate, dim=0)
-            X_test = utils.subsample_one_vector(X_test, sample_rate, dim=0)
+            print("Random window subsampling...")
+            X_train_shuffle_sub, y_train_shuffle_sub = utils.random_N_subsample(X_train_shuffle, y_train_shuffle, N=num_sample_clips, T=num_sample_frames, rate=sample_rate, dim=0)
+            X_test_shuffle_sub, y_test_shuffle_sub = utils.random_N_subsample(X_test_shuffle, y_test_shuffle, N=num_sample_clips, T=num_sample_frames, rate=sample_rate, dim=0)
+            print("Random window subsampling done.")
 
         if len(X_train)==0:
             print("Error loading data")
 
-        return X_train, y_train, X_test, y_test
+        return X_train_shuffle_sub, y_train_shuffle_sub, X_test_shuffle_sub, y_test_shuffle_sub
 
 
-    # a function for trimming video features
+    ################################################
+    #### function for trimming video features   ####
+    ################################################
     def split_actions(self, seq):
         start = 0
         duration = 0

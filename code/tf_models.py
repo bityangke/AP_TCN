@@ -183,21 +183,6 @@ def AP_TCN_SanityCheck(n_nodes, conv_len, n_classes, n_feat, max_len,
 
     # ---- Encoder ----
     for i in range(1):
-        # Pad beginning of sequence to prevent usage of future data
-#         if causal: model = ZeroPadding1D((conv_len//2,0))(model)
-#         model = Convolution1D(n_nodes[i], conv_len, border_mode='same')(model)
-#         if causal: model = Cropping1D((0,conv_len//2))(model)
-
-#         model = SpatialDropout1D(0.3)(model)
-        
-#         if activation=='norm_relu': 
-#             model = Activation('relu')(model)            
-#             model = Lambda(channel_normalization, name="encoder_norm_{}".format(i))(model)
-#         elif activation=='wavenet': 
-#             model = WaveNet_activation(model) 
-#         else:
-#             model = Activation(activation)(model)            
-        
         model = MaxPooling1D(90)(model)
             
     model = Flatten()(model) # reshape a feature volume to a column vector
